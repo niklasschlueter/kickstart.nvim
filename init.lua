@@ -674,6 +674,39 @@ require('lazy').setup({
         -- clangd = {},
         -- gopls = {},
         -- pyright = {},
+        pyright = {
+          settings = {
+            python = {
+              analysis = {
+                typeCheckingMode = 'strict',
+              },
+            },
+          },
+        },
+        ltex = {
+          -- Settings described in https://github.com/valentjn/ltex/blob/8e66f37ab6146168c739bc3869e2ce5bd7e415e1/pages/settings.md?plain=1#L1622
+          settings = {
+            ltex = {
+              --enabled = { 'latex', 'tex', 'bib', 'markdown' },
+              language = 'auto',
+              diagnosticSeverity = 'error',
+
+              --diagnosticSeverity = {
+              --  spelling = 'information',
+              --  grammar = 'information',
+              --  style = 'information',
+              --},
+              sentenceCacheSize = 2000,
+              additionalRules = {
+                enablePickyRules = true,
+                motherTongue = 'en-US',
+              },
+              disabledRules = {
+                -- fr = { "APOS_TYP", "FRENCH_WHITESPACE" }
+              },
+            },
+          },
+        },
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -714,25 +747,35 @@ require('lazy').setup({
       -- You can add other tools here that you want Mason to install
       -- for you, so that they are available from within Neovim.
       local ensure_installed = vim.tbl_keys(servers or {})
+      print 'ensure installed'
+
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
-      require('mason-lspconfig').setup {
-        ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
-        automatic_installation = false,
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-        },
-      }
+      -- Then, set up your servers manually:
+      for server_name, opts in pairs(servers) do
+        opts.capabilities = vim.tbl_deep_extend('force', {}, capabilities, opts.capabilities or {})
+        require('lspconfig')[server_name].setup(opts)
+      end
+
+      --require('mason-lspconfig').setup {
+      --  ensure_installed = { 'pyright' }, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
+      --  automatic_installation = true,
+      --  handlers = {
+      --    function(server_name)
+      --      print '🔧 Setting up LSP server:'
+      --      local server = servers[server_name] or {}
+      --      print('🔧 Setting up LSP server:', server_name)
+      --      -- This handles overriding only values explicitly passed
+      --      -- by the server configuration above. Useful when disabling
+      --      -- certain features of an LSP (for example, turning off formatting for ts_ls)
+      --      server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+      --      require('lspconfig')[server_name].setup(server)
+      --    end,
+      --  },
+      --}
     end,
   },
 
